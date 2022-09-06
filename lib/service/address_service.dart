@@ -1,9 +1,9 @@
+import 'dart:typed_data';
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:convert/convert.dart';
-import 'package:ed25519_hd_key/ed25519_hd_key.dart';
 import 'package:etherwallet/service/configuration_service.dart';
 import 'package:hex/hex.dart';
 import 'package:web3dart/credentials.dart';
+import 'package:bip32/bip32.dart' as bip32;
 
 abstract class IAddressService {
   String generateMnemonic();
@@ -32,9 +32,9 @@ class AddressService implements IAddressService {
   @override
   Future<String> getPrivateKey(String mnemonic) async {
     final seed = bip39.mnemonicToSeedHex(mnemonic);
-    final master = await ED25519_HD_KEY.getMasterKeyFromSeed(hex.decode(seed),
-        masterSecret: 'Bitcoin seed');
-    final privateKey = HEX.encode(master.key);
+    final bip32.BIP32 root = bip32.BIP32.fromSeed(HEX.decode(seed) as Uint8List);
+    final bip32.BIP32 child = root.derivePath("m/44'/60'/0'/0/0"); // <--- this is what you looking for. 0 will give you the first address and then you can iterate.
+    final privateKey = HEX.encode(child.privateKey as Uint8List);
     print('private: $privateKey');
     return privateKey;
   }
